@@ -211,7 +211,7 @@ class StartingWindow(QMainWindow):
         global main_window
         main_window = MainWindow()
         main_window.show()
-        #kenadd 
+        #KenH2000_fork 
         try:
           geo = json.loads(shared.GetSetting("mainGeometry",None,False))
           main_window.setGeometry(geo[0],geo[1],geo[2],geo[3])
@@ -346,7 +346,7 @@ class MainWindow(QMainWindow):
             self.ask_AOT(open_from_menu=False)
 
     def showParamSettingsFunc(self):
-        #kenadd
+        #KenH2000_fork
         if self.tab_widget.count()>1: 
           add_widget_layout=False     #subsequent model load
         else:
@@ -404,7 +404,7 @@ class MainWindow(QMainWindow):
         return True
 
     def closeEvent(self, event):
-        #kenadd
+        #KenH2000_fork
         geo = [main_window.x(),main_window.y(),main_window.width(),main_window.height()]
         shared.SetSetting("mainGeometry",json.dumps(geo))
         if (
@@ -696,7 +696,7 @@ class ModelSelector(QWidget):
         self.refresh_button.setFixedWidth(80)
         self.refresh_button.clicked.connect(self.refreshModels)
  
-        #kenadd
+        #KenH2000_fork
         self.loaded_label = QLabel()
         self.loaded_label.setText("Loaded Model: ")
         self.loaded_label.setFixedHeight(20)
@@ -714,7 +714,7 @@ class ModelSelector(QWidget):
         self.widget_layout.addWidget(self.select_combobox, 1, 1)
         self.widget_layout.addWidget(self.refresh_button, 1, 2)
         
-        #kenadd
+        #KenH2000_fork
         self.widget_layout.addWidget(self.loaded_label, 0, 0, 1, 2)
 
         self.widget_layout.addWidget(self.model_info, 2, 0, 1, 3)
@@ -741,7 +741,7 @@ class ModelSelector(QWidget):
     @shared.thread_wrapper(daemon=True)
     def loadModel(self):
         global main_window
-        #kenadd
+        #KenH2000_fork
         #main_window.exec_in_main(lambda: self.setEnabled(False))                    #model load tab is functional
         #main_window.exec_in_main(lambda: self.advanced_settings.setEnabled(False))  #model load tab is functional
 
@@ -2363,7 +2363,7 @@ class SeparationControl(QWidget):
 if __name__ == "__main__":
     try:
         shared.InitializeFolder()
-        #kenadd
+        #KenH2000_fork
         if shared.GetSetting("debug",None,False):
           shared.debug=True
         log_filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_demucs_gui_log.log")
@@ -2433,7 +2433,7 @@ if __name__ == "__main__":
         logging.info("PySide6 version: %s" % PySide6.__version__)
 
     app = QApplication([])
-    #kenadd
+    #KenH2000_fork
     try:
       app.setStyleSheet(shared.GetSetting("customStyle",None,False))
     except:
