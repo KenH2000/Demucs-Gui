@@ -1,6 +1,6 @@
 __version__ = "1.3.1"
 
-LICENSE = f"""Demucs-GUI {__version__}
+LICENSE = f"""Demucs-GUI (KenH2000 Fork) {__version__}
 Copyright (C) 2022-2025  Demucs-GUI developers
 See https://github.com/CarlGao4/Demucs-Gui for more information
 
