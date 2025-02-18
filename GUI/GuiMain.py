@@ -139,7 +139,6 @@ from PySide6_modified import (
 
 file_queue_lock = threading.Lock()
 
-
 class StartingWindow(QMainWindow):
     finish_sgn = Signal(float, str)
 
@@ -212,6 +211,12 @@ class StartingWindow(QMainWindow):
         global main_window
         main_window = MainWindow()
         main_window.show()
+        #kenadd 
+        try:
+          geo = json.loads(shared.GetSetting("mainGeometry",None,False))
+          main_window.setGeometry(geo[0],geo[1],geo[2],geo[3])
+        except:
+          pass
         self.hide()
         main_window.setStatusText.emit("Startup took %.3fs" % (self.end_time - self.start_time - paused_time))
 
@@ -341,20 +346,38 @@ class MainWindow(QMainWindow):
             self.ask_AOT(open_from_menu=False)
 
     def showParamSettingsFunc(self):
+        #kenadd
+        if self.tab_widget.count()>1: 
+          add_widget_layout=False     #subsequent model load
+        else:
+          add_widget_layout=True      #first-time model load
+
+        if not add_widget_layout:     #remove the mixer tab when loading a model
+          for i in range(0,self.tab_widget.count()):
+            if self.tab_widget.tabText(i)=='Mixer':
+              #print('remove '+self.tab_widget.tabText(i))
+              self.tab_widget.removeTab(i)
+
         self.param_settings = SepParamSettings()
         self.save_options = SaveOptions()
         self.param_settings.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.options_tab = QWidget()
-        self.options_tab.setLayout(QVBoxLayout())
-        self.options_tab.layout().addWidget(self.param_settings)
-        self.options_tab.layout().addWidget(self.save_options)
+
+        if add_widget_layout:         #first-time model load -- these are created on startup only
+          self.file_queue = FileQueue()
+          self.separation_control = SeparationControl()
+          self.options_tab = QWidget()
+          self.options_tab.setLayout(QVBoxLayout())
+          self.options_tab.layout().addWidget(self.param_settings)
+          self.options_tab.layout().addWidget(self.save_options)
+          self.tab_widget.addTab(self.options_tab, "Options")
+          self.tab_widget.addTab(self.file_queue, self.file_queue.widget_title % self.file_queue.queue_length)
+          self.widget_layout.addWidget(self.separation_control)
+
+        #(re)load mixer as last tab
         self.mixer = Mixer()
-        self.file_queue = FileQueue()
-        self.separation_control = SeparationControl()
-        self.tab_widget.addTab(self.options_tab, "Options")
         self.tab_widget.addTab(self.mixer, self.mixer.widget_title)
-        self.tab_widget.addTab(self.file_queue, self.file_queue.widget_title % self.file_queue.queue_length)
-        self.widget_layout.addWidget(self.separation_control)
+
+
 
     def updateQueueLength(self):
         self.tab_widget.setTabText(
@@ -381,6 +404,9 @@ class MainWindow(QMainWindow):
         return True
 
     def closeEvent(self, event):
+        #kenadd
+        geo = [main_window.x(),main_window.y(),main_window.width(),main_window.height()]
+        shared.SetSetting("mainGeometry",json.dumps(geo))
         if (
             self.restarting
             or (not hasattr(self, "separator"))
@@ -669,6 +695,11 @@ class ModelSelector(QWidget):
         self.refresh_button.setText("Refresh")
         self.refresh_button.setFixedWidth(80)
         self.refresh_button.clicked.connect(self.refreshModels)
+ 
+        #kenadd
+        self.loaded_label = QLabel()
+        self.loaded_label.setText("Loaded Model: ")
+        self.loaded_label.setFixedHeight(20)
 
         self.advanced_button = QPushButton()
         self.advanced_button.setText("Advanced")
@@ -679,9 +710,13 @@ class ModelSelector(QWidget):
         self.load_button.clicked.connect(self.loadModel)
 
         self.widget_layout = QGridLayout()
-        self.widget_layout.addWidget(self.select_label, 0, 0)
-        self.widget_layout.addWidget(self.select_combobox, 0, 1)
-        self.widget_layout.addWidget(self.refresh_button, 0, 2)
+        self.widget_layout.addWidget(self.select_label, 1, 0)
+        self.widget_layout.addWidget(self.select_combobox, 1, 1)
+        self.widget_layout.addWidget(self.refresh_button, 1, 2)
+        
+        #kenadd
+        self.widget_layout.addWidget(self.loaded_label, 0, 0, 1, 2)
+
         self.widget_layout.addWidget(self.model_info, 2, 0, 1, 3)
 
         self.button_layout = QHBoxLayout()
@@ -691,6 +726,7 @@ class ModelSelector(QWidget):
 
         self.setLayout(self.widget_layout)
         self.refreshModels()
+        self.loadModel()
 
     def updateModelInfo(self, index):
         self.model_info.setText(self.infos[index])
@@ -705,12 +741,24 @@ class ModelSelector(QWidget):
     @shared.thread_wrapper(daemon=True)
     def loadModel(self):
         global main_window
+        #kenadd
+        #main_window.exec_in_main(lambda: self.setEnabled(False))                    #model load tab is functional
+        #main_window.exec_in_main(lambda: self.advanced_settings.setEnabled(False))  #model load tab is functional
 
-        main_window.exec_in_main(lambda: self.setEnabled(False))
-        main_window.exec_in_main(lambda: self.advanced_settings.setEnabled(False))
+        #if add_widget_layout:                                                       #first-time
+        if main_window.tab_widget.count()<2:                                         #load previous model from settings
+          try:
+            mymodel=shared.GetSetting("selected_model",None,False)
+            model_name= self.models[mymodel]
+            model_repo=self.repos[mymodel]
+            self.select_combobox.setCurrentIndex(mymodel)
+          except:
+            model_name = self.models[main_window.exec_in_main(lambda: self.select_combobox.currentIndex())]
+            model_repo = self.repos[main_window.exec_in_main(lambda: self.select_combobox.currentIndex())]
+        else:
+          model_name = self.models[main_window.exec_in_main(lambda: self.select_combobox.currentIndex())]
+          model_repo = self.repos[main_window.exec_in_main(lambda: self.select_combobox.currentIndex())]
 
-        model_name = self.models[main_window.exec_in_main(lambda: self.select_combobox.currentIndex())]
-        model_repo = self.repos[main_window.exec_in_main(lambda: self.select_combobox.currentIndex())]
         logging.info(
             "Loading model %s from repo %s" % (model_name, model_repo if model_repo is not None else '"remote"')
         )
@@ -733,7 +781,8 @@ class ModelSelector(QWidget):
                 main_window.exec_in_main(lambda: self.setEnabled(True))
                 main_window.exec_in_main(lambda: self.advanced_settings.setEnabled(True))
                 return
-
+        
+        shared.SetSetting("selected_model",main_window.model_selector.select_combobox.currentIndex()) #save current model
         model_info = main_window.separator.modelInfo()
         main_window.exec_in_main(lambda: main_window.model_selector.model_info.setText(model_info))
         main_window.exec_in_main(lambda: self.model_info.setMinimumHeight(self.model_info.heightForWidth(400)))
@@ -741,7 +790,7 @@ class ModelSelector(QWidget):
         main_window.showParamSettings.emit()
         logging.info("Model loaded within %.4fs" % (end_time - start_time))
         logging.info(model_info)
-
+        self.loaded_label.setText("Loaded Model: "+model_name)                          #show active model in model tab
 
 class AdvancedModelSettings(QDialog):
     def __init__(self, refresh_command):
@@ -1012,7 +1061,7 @@ class SaveOptions(QGroupBox):
         self.file_format_label = QLabel()
         self.file_format_label.setText("File format:")
 
-        self.file_format = QComboBox()
+        self.file_format = QComboBox()      
         self.file_format.addItems(["wav", "flac"])
         self.file_format.setCurrentText(shared.GetHistory("file_format", default="flac"))
         self.file_format.currentTextChanged.connect(lambda x: shared.SetHistory("file_format", value=x))
@@ -1032,7 +1081,6 @@ class SaveOptions(QGroupBox):
         self.preset_selector_label.setToolTip("Select the command line preset to use for ffmpeg")
 
         self.preset_selector = QComboBox()
-        self.preset_selector.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.loadPresets()
         self.preset_selector.setCurrentText(shared.GetHistory("ffmpeg_default_preset", default="MP3"))
         self.ignore_preset_change = False
@@ -2315,6 +2363,9 @@ class SeparationControl(QWidget):
 if __name__ == "__main__":
     try:
         shared.InitializeFolder()
+        #kenadd
+        if shared.GetSetting("debug",None,False):
+          shared.debug=True
         log_filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_demucs_gui_log.log")
         if shared.debug:
             log = sys.stderr
@@ -2382,6 +2433,11 @@ if __name__ == "__main__":
         logging.info("PySide6 version: %s" % PySide6.__version__)
 
     app = QApplication([])
+    #kenadd
+    try:
+      app.setStyleSheet(shared.GetSetting("customStyle",None,False))
+    except:
+      pass
     starting_window = StartingWindow()
     starting_window.show()
     logging.debug("Supported styles: %s" % ", ".join(QStyleFactory.keys()))
