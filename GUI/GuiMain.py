@@ -270,11 +270,12 @@ class MainWindow(QMainWindow):
             "Clear saved file location", self, lambda: shared.ResetHistory("save_location")
         )
         self.menu_reset_style = Action("Reset style", self, lambda: shared.SetSetting("style", None))
-        self.menu_check_update = Action(
-            "Check for update",
-            self,
-            lambda: shared.checkUpdate(lambda x: self.exec_in_main(lambda: self.validateUpdate(x, show=True))),
-        )
+        #KenH2000_fork
+        #self.menu_check_update = Action(
+        #    "Check for update",
+        #    self,
+        #   lambda: shared.checkUpdate(lambda x: self.exec_in_main(lambda: self.validateUpdate(x, show=True))),
+        #)
         self.menu_restart = Action("Restart", self, self.restart)
         self.menu_about_log = Action("Open log", self, self.open_log)
         self.menu_about.addActions(
@@ -284,7 +285,7 @@ class MainWindow(QMainWindow):
                 self.menu_clear_history,
                 self.menu_clear_location,
                 self.menu_reset_style,
-                self.menu_check_update,
+                #self.menu_check_update,
                 self.menu_restart,
                 self.menu_about_log,
             ]
@@ -331,7 +332,7 @@ class MainWindow(QMainWindow):
         self.restarting = False
         self._status_prefix = ""
         self._status_text = ""
-
+        #KenH2000_fork
         #shared.checkUpdate(lambda x: self.exec_in_main(lambda: self.validateUpdate(x)))
 
     def showModelSelector(self):
