@@ -332,7 +332,7 @@ class MainWindow(QMainWindow):
         self._status_prefix = ""
         self._status_text = ""
 
-        shared.checkUpdate(lambda x: self.exec_in_main(lambda: self.validateUpdate(x)))
+        #shared.checkUpdate(lambda x: self.exec_in_main(lambda: self.validateUpdate(x)))
 
     def showModelSelector(self):
         self.model_selector = ModelSelector()
