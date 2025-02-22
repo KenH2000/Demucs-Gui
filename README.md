@@ -19,7 +19,7 @@ Changes to GUI:
 
 6.  (Optional) A custom style can be applied to the application by adding "customStyle":"<your css styles>" to settings.json file.  For example, "customStyle":"QWidget {color: 'black';}", would apply a black font to all QWidgets.  I added this option because some of the stock widget fonts were not visible on my PC.
 
-7.  Removed mandatory checkUpdate at program start.
+7.  Removed update check.
 
 The program should run unaffected if optional items are left unset.
 
