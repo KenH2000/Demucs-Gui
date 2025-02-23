@@ -1,5 +1,5 @@
 ## [![Icon](./icon/icon_32x32.png)](.) Demucs GUI
-[![GitHub release (latest by date including pre-releases)](https://img.shields.io/github/v/release/CarlGao4/Demucs-GUI?include_prereleases&style=plastic)](https://github.com/CarlGao4/Demucs-Gui/releases) 
+
 
 This is a GUI for music separation project `demucs`.
 
